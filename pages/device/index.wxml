@@ -1,0 +1,13 @@
+<view class="page">
+  <view wx:if="{{uuid}}" class="card">
+    <view class="eyebrow">AR DEVICE</view>
+    <view class="heading">已识别设备</view>
+    <view class="uuid" selectable>{{uuid}}</view>
+    <view wx:if="{{type}}" class="muted">{{type}}</view>
+    <view wx:if="{{!error}}" class="muted">正在打开设备信息…</view>
+  </view>
+  <view wx:if="{{error}}" class="error">
+    <view>{{error}}</view>
+    <button wx:if="{{uuid}}" class="secondary" bindtap="openDevice">重新打开</button>
+  </view>
+</view>

@@ -1,0 +1,31 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/device/scan",
+    "pages/device/index",
+    "pages/orders/index",
+    "pages/rental/detail",
+    "pages/admin/devices",
+    "pages/admin/users"
+  ],
+  "window": {
+    "navigationBarTitleText": "AR设备租赁",
+    "navigationBarBackgroundColor": "#f4f7f5",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f4f7f5",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#738078",
+    "selectedColor": "#176f53",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "扫码租赁" },
+      { "pagePath": "pages/orders/index", "text": "我的租赁" }
+    ]
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

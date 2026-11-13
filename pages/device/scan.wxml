@@ -1,0 +1,70 @@
+<view class="page">
+  <view wx:if="{{loading && !context}}" class="empty">正在读取设备状态…</view>
+  <view wx:if="{{uuid}}" class="card device-header">
+    <view class="row"><view class="eyebrow">AR DEVICE</view><text class="badge {{context && context.state === 'AVAILABLE' ? '' : 'neutral'}}">{{stateLabel || '已识别'}}</text></view>
+    <view class="heading device-name">{{context ? (context.device ? context.device.name : '待登记设备') : '已识别设备'}}</view>
+    <view class="device-type">{{context && context.device ? context.device.type : (qrType || '设备二维码')}}</view>
+    <view class="uuid" selectable>{{uuid}}</view>
+  </view>
+  <view wx:if="{{error}}" class="error"><view>{{error}}</view><button class="small quiet error-retry" bindtap="load" disabled="{{busy}}">重新查询</button></view>
+  <view wx:if="{{message}}" class="notice message">{{message}}</view>
+  <block wx:if="{{context}}">
+    <view wx:if="{{context.state === 'UNREGISTERED'}}" class="card">
+      <view class="section-title">设备尚未登记</view><view class="muted">{{context.actions.canCreate ? '登记后，可配置使用费与押金并启用租赁。' : '请联系现场管理员登记此设备。'}}</view>
+      <button wx:if="{{context.actions.canCreate}}" class="primary block-button" bindtap="createDevice" disabled="{{busy}}" loading="{{busy}}">登记设备</button>
+    </view>
+    <view wx:elif="{{context.state === 'AVAILABLE'}}" class="card">
+      <view class="section-title">租赁费用</view>
+      <view class="detail-row"><text class="label">使用费</text><text class="value">¥ {{useFeeText}}</text></view>
+      <view class="detail-row"><text class="label">押金</text><text class="value">¥ {{depositText}}</text></view>
+      <view class="divider"></view>
+      <view class="row"><text class="label">本次合计</text><text class="money"><text class="currency">¥</text>{{totalText}}</text></view>
+      <view class="notice">使用费与押金一次支付。归还设备后，由管理员确认结束租赁并办理退款。</view>
+      <view wx:if="{{paymentBlocked}}" class="notice">当前设备暂不能发起支付，请联系管理员。</view>
+      <button wx:if="{{context.actions.canRent}}" class="primary block-button" bindtap="rent" disabled="{{busy || paymentBlocked || error}}" loading="{{busy}}">支付并租赁 · ¥ {{totalText}}</button>
+    </view>
+    <view wx:elif="{{context.state === 'DISABLED'}}" class="card"><view class="section-title">设备暂不可租</view><view class="muted">{{context.actions.canConfigure ? '请检查租赁开关与费用配置。' : '请联系现场工作人员，或选择其他设备。'}}</view></view>
+    <view wx:elif="{{context.relation === 'other' && !manager}}" class="card unavailable"><view class="unavailable-mark">—</view><view class="section-title">设备当前不可用</view><view class="muted">设备正在被使用或处理中，请选择其他设备。</view><button class="secondary block-button" bindtap="load" disabled="{{busy}}">刷新设备状态</button></view>
+    <view wx:if="{{rental && (context.relation === 'mine' || manager)}}" class="card">
+      <view class="row"><view class="section-title rental-title">{{context.relation === 'mine' ? '我的租赁' : '当前租赁'}}</view><text class="badge {{rental.status === 'ACTIVE' ? '' : 'warning'}}">{{rental.label}}</text></view>
+      <view wx:if="{{rental.startedAt}}" class="duration"><view class="label">{{rental.endedAt ? '租赁时长' : '已租时长'}}</view><view class="duration-value">{{elapsed}}</view></view>
+      <view class="detail-row"><text class="label">订单编号</text><text class="value" selectable>{{rental.id}}</text></view>
+      <view class="detail-row"><text class="label">开始时间</text><text class="value">{{rental.startedText}}</text></view>
+      <view wx:if="{{rental.endedAt}}" class="detail-row"><text class="label">结束时间</text><text class="value">{{rental.endedText}}</text></view>
+      <view class="detail-row"><text class="label">使用费 / 押金</text><text class="value">¥ {{rental.useFeeText}} / ¥ {{rental.depositText}}</text></view>
+      <view wx:if="{{rental.refundStatus}}" class="detail-row"><text class="label">退款金额</text><text class="value">¥ {{rental.refundText}}</text></view>
+      <view wx:if="{{rental.status === 'ACTIVE' && context.relation === 'mine'}}" class="notice">归还设备时，请由现场管理员确认结束租赁并办理押金退款。</view>
+      <view wx:if="{{context.state === 'SETTLING'}}" class="notice">租赁已结束，正在处理退款。退款确认完成后，设备恢复可租状态。</view>
+      <view wx:if="{{context.actions.canContinuePayment}}" class="actions"><button class="primary" bindtap="continuePayment" loading="{{busy}}" disabled="{{busy || error}}">继续支付</button><button class="quiet" bindtap="cancelPayment" disabled="{{busy}}">取消订单</button></view>
+      <button wx:if="{{rental.status === 'PENDING_PAYMENT' && context.relation === 'mine'}}" class="secondary block-button" bindtap="checkPayment" disabled="{{busy}}">查询支付结果</button>
+      <button wx:if="{{rental.refundStatus}}" class="secondary block-button" bindtap="checkRefund" disabled="{{busy}}" loading="{{busy}}">查询退款进度</button>
+      <button wx:if="{{manager && (rental.refundStatus === 'ABNORMAL' || rental.refundStatus === 'CLOSED')}}" class="quiet block-button" bindtap="queryAfterMerchantHandling" disabled="{{busy}}">商户平台处理后查询</button>
+      <button wx:if="{{context.actions.canEndRental}}" class="primary block-button" bindtap="openEnd" disabled="{{busy}}">结束租赁与退款</button>
+      <button class="quiet block-button" bindtap="detail" disabled="{{busy}}">查看订单详情</button>
+    </view>
+    <view wx:if="{{context.state === 'RESERVED' && !rental}}" class="card"><view class="section-title">设备正在支付占用中</view><view class="muted">请稍后刷新状态，或选择其他设备。</view></view>
+    <button wx:if="{{context.actions.canConfigure}}" class="quiet config-button" bindtap="openConfig" disabled="{{busy}}">管理租赁费用与启停</button>
+  </block>
+</view>
+<view wx:if="{{showEnd}}" class="sheet-mask" catchtap="closeEnd">
+  <view class="sheet" catchtap="stopTap">
+    <view class="row"><view class="sheet-title">结束租赁</view><text class="sheet-close" bindtap="closeEnd">关闭</text></view>
+    <view class="muted sheet-copy">{{context.device.name}} · {{rental.elapsed}}</view>
+    <view class="radio-option {{refundMode === 'deposit' ? 'selected' : ''}}" data-mode="deposit" bindtap="selectRefund"><view><view>退还押金</view><view class="label">保留本次使用费 ¥ {{rental.useFeeText}}</view></view><text>¥ {{rental.depositText}}</text></view>
+    <view class="radio-option {{refundMode === 'full' ? 'selected' : ''}}" data-mode="full" bindtap="selectRefund"><view><view>全额退款</view><view class="label">退还使用费与押金</view></view><text>¥ {{rental.totalText}}</text></view>
+    <view class="field"><text class="label">结束原因</text><textarea class="input reason" placeholder="请输入归还或退款原因" maxlength="200" value="{{reason}}" bindinput="reasonInput" disabled="{{busy}}"/></view>
+    <checkbox-group bindchange="returnChanged"><label class="check-row"><checkbox color="#176f53" value="returned" checked="{{returned}}" disabled="{{busy}}"/><text>我已确认设备归还，并核对以上退款方式和金额。</text></label></checkbox-group>
+    <view class="notice">确认结束后停止计时，退款将退回原付款账户。退款确认成功后设备恢复可租。</view>
+    <button class="primary block-button" bindtap="confirmEnd" loading="{{busy}}" disabled="{{busy || !returned || !reason}}">确认结束 · 退款 ¥ {{refundText}}</button>
+  </view>
+</view>
+<view wx:if="{{showConfig}}" class="sheet-mask" catchtap="closeConfig">
+  <view class="sheet" catchtap="stopTap">
+    <view class="row"><view class="sheet-title">租赁费用配置</view><text class="sheet-close" bindtap="closeConfig">关闭</text></view>
+    <view class="field"><text class="label">每次使用费（元）</text><input class="input" type="digit" value="{{feeInput}}" bindinput="feeInput" disabled="{{busy}}"/></view>
+    <view class="field"><text class="label">押金（元）</text><input class="input" type="digit" value="{{depositInput}}" bindinput="depositInput" disabled="{{busy}}"/></view>
+    <view class="row field"><view><view>允许租赁</view><view class="label">启用后，空闲设备可以付费租赁</view></view><switch color="#176f53" checked="{{enabledInput}}" bindchange="enabledChanged" disabled="{{busy}}"/></view>
+    <view class="notice">配置修改用于新订单，已有租赁继续使用下单时的费用。</view>
+    <button class="primary block-button" bindtap="saveConfig" loading="{{busy}}" disabled="{{busy}}">保存配置</button>
+  </view>
+</view>

@@ -1,0 +1,4 @@
+{
+  "desc": "设备和订单页面按用户身份访问",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

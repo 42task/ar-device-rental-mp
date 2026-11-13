@@ -1,0 +1,12 @@
+node_modules/
+project.private.config.json
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.p8

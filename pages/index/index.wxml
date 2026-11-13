@@ -1,0 +1,20 @@
+<view class="page home">
+  <view class="brand"><view class="brand-mark">AR</view><view><view class="brand-name">AR设备租赁</view><view class="brand-sub">设备在手，即刻出发</view></view></view>
+  <view class="hero">
+    <view class="eyebrow">SCAN · RENT · EXPERIENCE</view>
+    <view class="hero-title">扫码，开启<view>下一段体验。</view></view>
+    <view class="hero-copy">扫描设备二维码，查看使用费用与押金。<view>付款后，即可查看你的租赁状态。</view></view>
+    <view class="scan-frame"><view class="scan-bracket a"></view><view class="scan-bracket b"></view><view class="scan-bracket c"></view><view class="scan-bracket d"></view><view class="scan-grid">AR</view><view class="scan-line"></view></view>
+    <button class="primary scan-button" bindtap="scan" loading="{{scanning}}" disabled="{{scanning}}">扫描设备二维码</button>
+    <view class="hero-foot">使用费与押金一次支付 · 归还后由管理员办理退款</view>
+  </view>
+  <view wx:if="{{error}}" class="error">{{error}}<button class="small quiet retry" bindtap="load" loading="{{loading}}">重新登录</button></view>
+  <view class="card identity-card">
+    <view class="row"><view><view class="label">当前账号</view><view class="identity-name">{{identity ? (identity.user.nickname || '微信租赁用户') : (loading ? '正在登录…' : '等待登录')}}</view></view><text wx:if="{{identity}}" class="badge">{{roleLabel}}</text></view>
+    <view wx:if="{{identity}}" class="account-id">账号 ID · {{identity.user.id}}</view>
+  </view>
+  <view class="link-card" bindtap="orders"><view><view class="section-title">我的租赁</view><view class="muted">查看订单、租赁时间和退款进度</view></view><text class="chevron">›</text></view>
+  <view wx:if="{{manager}}" class="link-card" bindtap="devices"><view><view class="section-title">设备管理</view><view class="muted">租赁状态、费用配置与设备启停</view></view><text class="chevron">›</text></view>
+  <view wx:if="{{root}}" class="link-card" bindtap="users"><view><view class="section-title">用户身份管理</view><view class="muted">授予或撤销设备管理员身份</view></view><text class="chevron">›</text></view>
+  <view class="home-footer">AR DEVICE RENTAL</view>
+</view>

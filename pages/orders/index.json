@@ -1,0 +1,5 @@
+{
+  "navigationBarTitleText": "我的租赁",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 80
+}

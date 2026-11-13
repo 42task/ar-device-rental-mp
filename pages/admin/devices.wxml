@@ -1,0 +1,8 @@
+<view class="page">
+  <view class="row admin-header"><view><view class="eyebrow">DEVICE OPERATIONS</view><view class="heading">设备管理</view></view><button wx:if="{{allowed}}" class="primary small" bindtap="scan" loading="{{scanning}}" disabled="{{scanning}}">扫码设备</button></view>
+  <view wx:if="{{allowed}}" class="search"><input class="input" placeholder="搜索设备名称或 UUID" value="{{search}}" bindinput="searchInput" confirm-type="search" bindconfirm="search"/><button class="secondary small" bindtap="search" disabled="{{loading}}">搜索</button></view>
+  <view wx:if="{{error}}" class="error">{{error}}<button class="quiet small retry" bindtap="retry">重新查询</button></view>
+  <view wx:if="{{allowed}}" class="count">共 {{total}} 台设备</view>
+  <block wx:if="{{allowed}}"><view wx:for="{{items}}" wx:key="id" class="card device-card" data-index="{{index}}" bindtap="open"><view class="row"><view class="device-title">{{item.device.name}}</view><text class="badge {{item.state === 'AVAILABLE' ? '' : 'neutral'}}">{{item.label}}</text></view><view class="uuid">{{item.device.uuid}}</view><view class="divider"></view><view class="row"><view class="fees"><text>使用费 ¥ {{item.useFeeText}}</text><text>押金 ¥ {{item.depositText}}</text></view><text class="manage">查看管理 ›</text></view></view></block>
+  <view wx:if="{{loading}}" class="empty">正在读取设备…</view><view wx:elif="{{allowed && !items.length}}" class="empty">{{appliedSearch ? '没有找到匹配设备' : '暂无设备，请扫描设备二维码进行登记。'}}</view><view wx:elif="{{allowed && !hasMore}}" class="end">已显示全部设备</view>
+</view>

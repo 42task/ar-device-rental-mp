@@ -1,0 +1,13 @@
+<view class="page">
+  <view class="list-heading"><view class="eyebrow">MY RENTALS</view><view class="row"><view class="heading">我的租赁</view><text class="muted count">{{total}} 笔</text></view><view class="muted subtitle">订单、租赁时间与退款进度</view></view>
+  <view wx:if="{{error}}" class="error">{{error}}<button class="quiet small retry" bindtap="retry">重新查询</button></view>
+  <view wx:for="{{items}}" wx:key="id" class="card order-card" data-id="{{item.id}}" bindtap="detail">
+    <view class="row"><view class="order-name">{{item.deviceName || 'AR 设备'}}</view><text class="badge {{item.status === 'ACTIVE' ? '' : 'neutral'}}">{{item.label}}</text></view>
+    <view class="order-uuid">{{item.uuid}}</view>
+    <view class="divider"></view>
+    <view class="row"><text class="label">使用费 ¥ {{item.useFeeText}} · 押金 ¥ {{item.depositText}}</text><text class="order-total">¥ {{item.totalText}}</text></view>
+    <view class="row order-date"><text>{{item.createdText}}</text><text>查看详情 ›</text></view>
+  </view>
+  <view wx:if="{{!loading && !items.length && !error}}" class="empty"><view class="empty-title">还没有租赁记录</view><view>扫描设备二维码，开始第一段体验。</view><button class="secondary empty-button" bindtap="scan">去扫码租赁</button></view>
+  <view wx:if="{{loading}}" class="loading">正在读取订单…</view><view wx:elif="{{items.length && !hasMore}}" class="loading">已显示全部记录</view>
+</view>
