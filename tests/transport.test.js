@@ -87,7 +87,7 @@ test("native errors never expose sensitive diagnostics, request headers, or data
       failure: {
         errMsg:
           category.diagnostics[0] +
-          " https://c.4mr.cn/api/v2/rental/auth/login?code=secret-login-code&token=secret-query-token Authorization: Bearer secret-native-token",
+          " https://d.4mr.cn/api/v2/rental/auth/login?code=secret-login-code&token=secret-query-token Authorization: Bearer secret-native-token",
         token: "secret-native-field",
       },
     });

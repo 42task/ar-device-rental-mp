@@ -23,11 +23,7 @@ for (const page of app.pages)
     if (!fs.existsSync(path.join(root, page + "." + extension)))
       throw new Error("缺少页面文件：" + page + "." + extension);
   }
-if (
-  !fs
-    .readFileSync(path.join(root, "utils/config.js"), "utf8")
-    .includes("https://c.4mr.cn/api/v2")
-)
+if (config.API_BASE !== "https://d.4mr.cn/api/v2")
   throw new Error("后端入口配置不正确。");
 console.log(
   "已验证 AR设备租赁：" +

@@ -1,7 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { clearModules } = require("./helpers");
-const APPID = "wx03dbf50c15cac06f";
+const config = require("../utils/config");
+const APPID = config.APP_ID;
 const identity = (token) => ({
   appId: APPID,
   user: { id: 7, role: "user" },
@@ -15,7 +16,7 @@ const identity = (token) => ({
 function setup(transport, saved) {
   clearModules();
   const storage = new Map(
-      saved ? [["AR_DEVICE_RENTAL_SESSION_V1", saved]] : []
+      saved ? [[config.SESSION_KEY, saved]] : []
     ),
     calls = [];
   let logins = 0;
@@ -59,6 +60,9 @@ test("new application login and concurrent requests share one login and scoped b
     f.request.get("/rentals"),
     f.request.get("/rental/devices/context", { uuid: "camera+1" }),
   ]);
+  assert.ok(
+    f.calls.every((call) => call.url.startsWith("https://d.4mr.cn/api/v2/"))
+  );
   assert.equal(f.logins(), 1);
   assert.equal(
     f.calls.filter((call) => call.url.endsWith("/auth/login")).length,
@@ -69,6 +73,42 @@ test("new application login and concurrent requests share one login and scoped b
     business.every((call) => call.header.Authorization === "Bearer new-token")
   );
   assert.ok(business.some((call) => call.url.endsWith("?uuid=camera%2B1")));
+});
+test("legacy backend cache requires a fresh WeChat login and cannot carry its role or token", async () => {
+  const f = setup((options) =>
+    options.url.endsWith("/auth/login")
+      ? { data: { success: true, data: identity("fresh-d-backend-token") } }
+      : { data: { ok: true } }
+  );
+  const legacy = Object.assign(identity("legacy-backend-token"), {
+    user: { id: 99, role: "root" },
+    openid: "legacy-backend-openid",
+  });
+  f.storage.set("AR_DEVICE_RENTAL_SESSION_V1", legacy);
+  assert.equal(f.session.load(), null);
+
+  await f.request.get("/rentals");
+
+  assert.equal(f.logins(), 1);
+  assert.equal(f.calls.length, 2);
+  assert.equal(
+    f.calls[0].url,
+    "https://d.4mr.cn/api/v2/rental/auth/login"
+  );
+  assert.equal(f.calls[0].method, "POST");
+  assert.deepEqual(f.calls[0].data, { code: "new-code" });
+  assert.equal(f.calls[0].header.Authorization, undefined);
+  assert.equal(f.calls[1].url, "https://d.4mr.cn/api/v2/rentals");
+  assert.equal(
+    f.calls[1].header.Authorization,
+    "Bearer fresh-d-backend-token"
+  );
+  assert.deepEqual(f.session.load(), identity("fresh-d-backend-token"));
+  assert.deepEqual(
+    f.storage.get(config.SESSION_KEY),
+    identity("fresh-d-backend-token")
+  );
+  assert.equal(f.session.isManager(f.session.load()), false);
 });
 test("concurrent expired requests share refresh and preserve write idempotency payload", async () => {
   const f = setup((options) => {
@@ -145,5 +185,5 @@ test("wrong application identity is rejected rather than cached", async () => {
     },
   }));
   await assert.rejects(f.session.login(true), /登录应用不匹配/);
-  assert.equal(f.storage.has("AR_DEVICE_RENTAL_SESSION_V1"), false);
+  assert.equal(f.storage.has(config.SESSION_KEY), false);
 });
